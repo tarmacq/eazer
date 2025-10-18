@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evorra - Connect & Chat</title>
+    <title>Skyrra</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -40,7 +40,7 @@
     <div id="app" class="hidden">
         <div id="sidebar" class="flex flex-col">
             <div class="flex items-center mb-6">
-                <img src="path/to/evara-logo.svg" alt="Evorra Logo" class="h-8 w-8 mr-2">
+                <img src="path/to/evara-logo.svg" alt="Skyrra Logo" class="h-8 w-8 mr-2">
                 <h1 class="text-xl font-bold text-indigo-400">Evorra</h1>
             </div>
             <div class="parallax mb-6"></div>
@@ -67,7 +67,7 @@
             document.getElementById('messages').innerHTML = '<div class="error">Error: Supabase not loaded. Check console for details.</div>';
         } else {
             // Initialize Supabase
-            const supabase = window.supabase.createClient('Yhttps://lxtaitbzpvdzyonxhfmm.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM', {
+            const supabase = window.supabase.createClient('https://lxtaitbzpvdzyonxhfmm.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM', {
                 auth: { persistSession: true }
             });
 
@@ -129,7 +129,7 @@
             async function loadServers() {
                 try {
                     serversDiv.innerHTML = '';
-                    const servers = [{ id: 1, name: 'Evorra Hub' }]; // Replace with: await supabase.from('servers').select('*');
+                    const servers = [{ id: 1, name: 'Skyrra Hub' }]; // Replace with: await supabase.from('servers').select('*');
                     servers.forEach(server => {
                         const div = document.createElement('div');
                         div.className = 'server flex items-center';
