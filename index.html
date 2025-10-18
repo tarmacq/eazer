@@ -388,162 +388,163 @@
     </div>
   </div>
 
-  <script>
-    // ✅ Supabase keys (no extra spaces!)
-    const SUPABASE_URL = 'https://lxtaitbzpvdzyonxhfmm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM';
+ <script>
+  // ✅ Supabase keys (no extra spaces!)
+  const SUPABASE_URL = 'https://lxtaitbzpvdzyonxhfmm.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // ✅ Use a different variable name to avoid conflict
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM
-    const authScreen = document.getElementById('auth-screen');
-    const appScreen = document.getElementById('app');
-    const loginBtn = document.getElementById('login-btn');
-    const signupBtn = document.getElementById('signup-btn');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const messageInput = document.getElementById('message-input');
-    const messagesContainer = document.getElementById('messages');
-    const userEmailEl = document.getElementById('user-email');
-    const userInitialEl = document.getElementById('user-initial');
-    const sendBtn = document.getElementById('send-btn');
+  // DOM
+  const authScreen = document.getElementById('auth-screen');
+  const appScreen = document.getElementById('app');
+  const loginBtn = document.getElementById('login-btn');
+  const signupBtn = document.getElementById('signup-btn');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const messageInput = document.getElementById('message-input');
+  const messagesContainer = document.getElementById('messages');
+  const userEmailEl = document.getElementById('user-email');
+  const userInitialEl = document.getElementById('user-initial');
+  const sendBtn = document.getElementById('send-btn');
 
-    const CHANNEL_ID = '4c9064b3-97dd-4831-bbb3-fa16ec33e1af'; // your 'general' channel
+  const CHANNEL_ID = '4c9064b3-97dd-4831-bbb3-fa16ec33e1af'; // your 'general' channel
 
-    // Auth
-    async function signIn(email, password) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert('Login error: ' + error.message);
+  // Auth
+  async function signIn(email, password) {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) alert('Login error: ' + error.message);
+  }
+
+  async function signUp(email, password) {
+    const { error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) {
+      alert('Signup error: ' + error.message);
+    } else {
+      alert('Signup successful! Please check your email for confirmation.');
     }
+  }
 
-    async function signUp(email, password) {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert('Signup error: ' + error.message);
-      } else {
-        alert('Signup successful! Please check your email for confirmation.');
-      }
-    }
+  function getUserInitial(email) {
+    return email.charAt(0).toUpperCase();
+  }
 
-    function getUserInitial(email) {
-      return email.charAt(0).toUpperCase();
-    }
+  // Messages
+  async function loadMessages() {
+    const { data, error } = await supabaseClient
+      .from('messages')
+      .select('*, user: user_id ( email )')
+      .eq('channel_id', CHANNEL_ID)
+      .order('created_at', { ascending: true });
 
-    // Messages
-    async function loadMessages() {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*, user: user_id ( email )')
-        .eq('channel_id', CHANNEL_ID)
-        .order('created_at', { ascending: true });
+    if (error) console.error(error);
+    else renderMessages(data);
+  }
 
-      if (error) console.error(error);
-      else renderMessages(data);
-    }
+  function renderMessages(messages) {
+    messagesContainer.innerHTML = '';
+    const { data: { user } } = supabaseClient.auth.getUser();
+    messages.forEach(msg => {
+      const isMe = msg.user_id === user?.id;
+      const div = document.createElement('div');
+      div.className = `message ${isMe ? 'me' : ''}`;
+      div.innerHTML = `
+        <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
+        <div class="message-content">${escapeHtml(msg.content)}</div>
+      `;
+      messagesContainer.appendChild(div);
+    });
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
 
-    function renderMessages(messages) {
-      messagesContainer.innerHTML = '';
-      const { data: { user } } = supabase.auth.getUser();
-      messages.forEach(msg => {
-        const isMe = msg.user_id === user?.id;
-        const div = document.createElement('div');
-        div.className = `message ${isMe ? 'me' : ''}`;
-        div.innerHTML = `
-          <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
-          <div class="message-content">${escapeHtml(msg.content)}</div>
-        `;
-        messagesContainer.appendChild(div);
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '<',
+      '>': '>',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  async function sendMessage(content) {
+    if (!content.trim()) return;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabaseClient
+      .from('messages')
+      .insert({
+        channel_id: CHANNEL_ID,
+        user_id: user.id,
+        content: content.trim()
       });
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    if (error) console.error('Send error:', error);
+    else messageInput.value = '';
+  }
+
+  function setupRealtime() {
+    supabaseClient
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `channel_id=eq.${CHANNEL_ID}`
+        },
+        (payload) => {
+          const msg = payload.new;
+          const { data: { user } } = supabaseClient.auth.getUser();
+          const isMe = msg.user_id === user?.id;
+          const div = document.createElement('div');
+          div.className = `message ${isMe ? 'me' : ''}`;
+          div.innerHTML = `
+            <div class="message-avatar">${getUserInitial('U')}</div>
+            <div class="message-content">${escapeHtml(msg.content)}</div>
+          `;
+          messagesContainer.appendChild(div);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      )
+      .subscribe();
+  }
+
+  // Auth listener
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+      const user = session.user;
+      userEmailEl.textContent = user.email;
+      userInitialEl.textContent = getUserInitial(user.email);
+      authScreen.style.display = 'none';
+      appScreen.style.display = 'flex';
+      loadMessages();
+      setupRealtime();
+    } else if (event === 'SIGNED_OUT') {
+      authScreen.style.display = 'flex';
+      appScreen.style.display = 'none';
+      messagesContainer.innerHTML = '';
     }
+  });
 
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '<',
-        '>': '>',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return text.replace(/[&<>"']/g, m => map[m]);
+  // Events
+  loginBtn.addEventListener('click', () => signIn(emailInput.value, passwordInput.value));
+  signupBtn.addEventListener('click', () => signUp(emailInput.value, passwordInput.value));
+  sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
+
+  messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(messageInput.value);
     }
+  });
 
-    async function sendMessage(content) {
-      if (!content.trim()) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          channel_id: CHANNEL_ID,
-          user_id: user.id,
-          content: content.trim()
-        });
-
-      if (error) console.error('Send error:', error);
-      else messageInput.value = '';
-    }
-
-    function setupRealtime() {
-      supabase
-        .channel('public:messages')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `channel_id=eq.${CHANNEL_ID}`
-          },
-          (payload) => {
-            const msg = payload.new;
-            const { data: { user } } = supabase.auth.getUser();
-            const isMe = msg.user_id === user?.id;
-            const div = document.createElement('div');
-            div.className = `message ${isMe ? 'me' : ''}`;
-            div.innerHTML = `
-              <div class="message-avatar">${getUserInitial('U')}</div>
-              <div class="message-content">${escapeHtml(msg.content)}</div>
-            `;
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
-        )
-        .subscribe();
-    }
-
-    // Auth listener
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        const user = session.user;
-        userEmailEl.textContent = user.email;
-        userInitialEl.textContent = getUserInitial(user.email);
-        authScreen.style.display = 'none';
-        appScreen.style.display = 'flex';
-        loadMessages();
-        setupRealtime();
-      } else if (event === 'SIGNED_OUT') {
-        authScreen.style.display = 'flex';
-        appScreen.style.display = 'none';
-        messagesContainer.innerHTML = '';
-      }
-    });
-
-    // Events
-    loginBtn.addEventListener('click', () => signIn(emailInput.value, passwordInput.value));
-    signupBtn.addEventListener('click', () => signUp(emailInput.value, passwordInput.value));
-    sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
-
-    messageInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(messageInput.value);
-      }
-    });
-
-    // Initialize Lucide icons (including send button)
-    lucide.createIcons();
-  </script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+</script>
 </body>
 </html>
