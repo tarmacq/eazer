@@ -431,32 +431,34 @@
   }
 
   // Messages
-  async function loadMessages() {
-    const { data, error } = await supabaseClient
-      .from('messages')
-      .select('*, user: user_id ( email )')
-      .eq('channel_id', CHANNEL_ID)
-      .order('created_at', { ascending: true });
+ async function loadMessages() {
+  const { data, error } = await supabaseClient
+    .from('messages')
+    .select('*, user: user_id ( email )')
+    .eq('channel_id', CHANNEL_ID)
+    .order('created_at', { ascending: true });
 
-    if (error) console.error(error);
-    else renderMessages(data);
+  if (error) {
+    console.error('Load messages error:', error);
+  } else {
+    await renderMessages(data); // ✅ await
   }
-
-  function renderMessages(messages) {
-    messagesContainer.innerHTML = '';
-    const { data: { user } } = supabaseClient.auth.getUser();
-    messages.forEach(msg => {
-      const isMe = msg.user_id === user?.id;
-      const div = document.createElement('div');
-      div.className = `message ${isMe ? 'me' : ''}`;
-      div.innerHTML = `
-        <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
-        <div class="message-content">${escapeHtml(msg.content)}</div>
-      `;
-      messagesContainer.appendChild(div);
-    });
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
+}
+async function renderMessages(messages) {
+  messagesContainer.innerHTML = '';
+  const { data: { user } } = await supabaseClient.auth.getUser(); // ✅ await here
+  messages.forEach(msg => {
+    const isMe = msg.user_id === user?.id;
+    const div = document.createElement('div');
+    div.className = `message ${isMe ? 'me' : ''}`;
+    div.innerHTML = `
+      <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
+      <div class="message-content">${escapeHtml(msg.content)}</div>
+    `;
+    messagesContainer.appendChild(div);
+  });
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
   function escapeHtml(text) {
     const map = {
@@ -470,49 +472,55 @@
   }
 
   async function sendMessage(content) {
-    if (!content.trim()) return;
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabaseClient
-      .from('messages')
-      .insert({
-        channel_id: CHANNEL_ID,
-        user_id: user.id,
-        content: content.trim()
-      });
-
-    if (error) console.error('Send error:', error);
-    else messageInput.value = '';
+  if (!content.trim()) return;
+  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  if (authError || !user) {
+    console.error('Not authenticated');
+    return;
   }
+
+  const { error } = await supabaseClient
+    .from('messages')
+    .insert({
+      channel_id: CHANNEL_ID,
+      user_id: user.id,
+      content: content.trim()
+    });
+
+  if (error) {
+    console.error('Send message error:', error); // 👈 This will show the 400 reason
+  } else {
+    messageInput.value = '';
+  }
+}
 
   function setupRealtime() {
-    supabaseClient
-      .channel('public:messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `channel_id=eq.${CHANNEL_ID}`
-        },
-        (payload) => {
-          const msg = payload.new;
-          const { data: { user } } = supabaseClient.auth.getUser();
-          const isMe = msg.user_id === user?.id;
-          const div = document.createElement('div');
-          div.className = `message ${isMe ? 'me' : ''}`;
-          div.innerHTML = `
-            <div class="message-avatar">${getUserInitial('U')}</div>
-            <div class="message-content">${escapeHtml(msg.content)}</div>
-          `;
-          messagesContainer.appendChild(div);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      )
-      .subscribe();
-  }
+  const channel = supabaseClient
+    .channel('public:messages')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `channel_id=eq.${CHANNEL_ID}`
+      },
+      async (payload) => { // ✅ make callback async
+        const msg = payload.new;
+        const { data: { user } } = await supabaseClient.auth.getUser(); // ✅ await
+        const isMe = msg.user_id === user?.id;
+        const div = document.createElement('div');
+        div.className = `message ${isMe ? 'me' : ''}`;
+        div.innerHTML = `
+          <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
+          <div class="message-content">${escapeHtml(msg.content)}</div>
+        `;
+        messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    )
+    .subscribe();
+}
 
   // Auth listener
   supabaseClient.auth.onAuthStateChange((event, session) => {
