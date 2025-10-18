@@ -17,7 +17,10 @@
       --text-secondary: #a0a0c0;
       --accent: #8a6bff;
       --accent-gradient: linear-gradient(135deg, #8a6bff, #4a5de0);
-      --success: #4ade80;
+      --border-radius: 16px;
+      --spacing-sm: 0.5rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
     }
 
     * {
@@ -64,7 +67,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 2rem;
+      padding: var(--spacing-lg);
       background: rgba(10, 10, 20, 0.8);
       backdrop-filter: blur(12px);
       z-index: 10;
@@ -73,26 +76,14 @@
     .logo-placeholder {
       width: 80px;
       height: 80px;
-      background: var(--accent-gradient);
-      border-radius: 16px;
-      margin-bottom: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 24px;
+      margin-bottom: var(--spacing-lg);
     }
-
-    /* Replace the above .logo-placeholder with your actual logo like:
-       <img src="your-logo.svg" class="logo" />
-    */
 
     .auth-card {
       background: var(--bg-panel);
       backdrop-filter: blur(16px);
-      border-radius: 20px;
-      padding: 2rem;
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
       width: 100%;
       max-width: 400px;
       border: 1px solid rgba(138, 107, 255, 0.2);
@@ -101,15 +92,15 @@
 
     .auth-card h2 {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: var(--spacing-md);
       background: var(--accent-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-size: 2rem;
+      font-size: 1.75rem;
     }
 
     .input-group {
-      margin-bottom: 1rem;
+      margin-bottom: var(--spacing-sm);
     }
 
     .input-group input {
@@ -137,7 +128,7 @@
       font-weight: 600;
       cursor: pointer;
       font-size: 1rem;
-      margin-top: 0.5rem;
+      margin-top: var(--spacing-sm);
       transition: transform 0.2s, opacity 0.2s;
     }
 
@@ -165,11 +156,11 @@
       border-right: 1px solid rgba(138, 107, 255, 0.2);
       display: flex;
       flex-direction: column;
-      padding: 1.5rem 0;
+      padding: var(--spacing-lg) 0;
     }
 
     .sidebar-header {
-      padding: 0 1.5rem 1.5rem;
+      padding: 0 var(--spacing-lg) var(--spacing-md);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -198,7 +189,7 @@
 
     .channel-list {
       flex: 1;
-      padding: 0 1.5rem;
+      padding: 0 var(--spacing-lg);
     }
 
     .channel-item {
@@ -215,7 +206,7 @@
     }
 
     .user-info {
-      padding: 1rem 1.5rem;
+      padding: var(--spacing-md) var(--spacing-lg);
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
       align-items: center;
@@ -241,23 +232,30 @@
     }
 
     #chat-header {
-      padding: 1rem 1.5rem;
+      padding: var(--spacing-md) var(--spacing-lg);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       font-weight: 600;
+      font-size: 1.1rem;
     }
 
     #messages {
       flex: 1;
-      padding: 1.5rem;
+      padding: var(--spacing-lg);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--spacing-md);
     }
 
     .message {
       display: flex;
-      gap: 1rem;
+      gap: var(--spacing-sm);
+      max-width: 85%;
+    }
+
+    .message.me {
+      align-self: flex-end;
+      flex-direction: row-reverse;
     }
 
     .message-avatar {
@@ -277,27 +275,48 @@
     .message-content {
       background: var(--bg-panel);
       padding: 0.75rem 1rem;
-      border-radius: 12px;
-      max-width: 70%;
+      border-radius: 16px;
+      word-break: break-word;
+    }
+
+    .message.me .message-content {
+      background: var(--accent-gradient);
+      color: white;
     }
 
     #message-input-area {
-      padding: 1.25rem;
+      padding: var(--spacing-md) var(--spacing-lg);
       border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      gap: var(--spacing-sm);
     }
 
     #message-input {
-      width: 100%;
+      flex: 1;
       padding: 0.75rem 1rem;
-      border-radius: 20px;
+      border-radius: 24px;
       background: var(--bg-input);
       border: 1px solid rgba(138, 107, 255, 0.3);
       color: white;
       outline: none;
       font-size: 1rem;
       resize: none;
-      height: 24px;
+      min-height: 24px;
       max-height: 120px;
+    }
+
+    #send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      flex-shrink: 0;
     }
 
     /* Responsive */
@@ -314,13 +333,19 @@
       .sidebar-header, .channel-list, .user-info {
         display: none;
       }
+      #messages {
+        padding: var(--spacing-md);
+      }
+      #message-input-area {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
     }
   </style>
 </head>
 <body>
   <!-- Auth Screen -->
   <div id="auth-screen">
-    <img src="https://ik.imagekit.io/hswtnwf8i/Evorra%20logo%20white%20no%20bg.png?updatedAt=1760781430390" class="logo-placeholder" style="width:80px; height:auto;" />
+    <img src="https://ik.imagekit.io/hswtnwf8i/Evorra%20logo%20white%20no%20bg.png?updatedAt=1760781430390" class="logo-placeholder" />
     <div class="auth-card">
       <h2>Skyrra</h2>
       <div class="input-group">
@@ -338,7 +363,7 @@
   <div class="container" id="app">
     <div id="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-logo">S</div>
+        <img src="https://ik.imagekit.io/hswtnwf8i/Evorra%20logo%20white%20no%20bg.png?updatedAt=1760781430390" class="logo-placeholder" />
         <div class="sidebar-title">Skyrra</div>
       </div>
       <div class="channel-list">
@@ -352,22 +377,25 @@
     <div id="main-chat">
       <div id="chat-header"># general</div>
       <div id="messages">
-        <!-- Messages will appear here -->
+        <!-- Messages appear here -->
       </div>
       <div id="message-input-area">
         <textarea id="message-input" placeholder="Message #general"></textarea>
+        <button id="send-btn">
+          <i data-lucide="send" size="18"></i>
+        </button>
       </div>
     </div>
   </div>
 
   <script>
-    // 👇 REPLACE WITH YOUR SUPABASE KEYS
+    // ✅ Supabase keys (no extra spaces!)
     const SUPABASE_URL = 'https://lxtaitbzpvdzyonxhfmm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM Elements
+    // DOM
     const authScreen = document.getElementById('auth-screen');
     const appScreen = document.getElementById('app');
     const loginBtn = document.getElementById('login-btn');
@@ -378,44 +406,35 @@
     const messagesContainer = document.getElementById('messages');
     const userEmailEl = document.getElementById('user-email');
     const userInitialEl = document.getElementById('user-initial');
+    const sendBtn = document.getElementById('send-btn');
 
-    // Handle auth
+    const CHANNEL_ID = '4c9064b3-97dd-4831-bbb3-fa16ec33e1af'; // your 'general' channel
+
+    // Auth
     async function signIn(email, password) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        alert('Login error: ' + error.message);
-        return false;
-      }
-      return true;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert('Login error: ' + error.message);
     }
 
     async function signUp(email, password) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         alert('Signup error: ' + error.message);
-        return false;
+      } else {
+        alert('Signup successful! Please check your email for confirmation.');
       }
-      alert('Signup successful! Please check your email for confirmation.');
-      return true;
     }
 
-    // Get user initial
     function getUserInitial(email) {
       return email.charAt(0).toUpperCase();
     }
 
-    // Load messages
+    // Messages
     async function loadMessages() {
       const { data, error } = await supabase
         .from('messages')
-        .select('*, users: user_id(*)')
-        .eq('channel_id', '4c9064b3-97dd-4831-bbb3-fa16ec33e1af') // 👈 Replace with actual channel ID
+        .select('*, user: user_id ( email )')
+        .eq('channel_id', CHANNEL_ID)
         .order('created_at', { ascending: true });
 
       if (error) console.error(error);
@@ -424,11 +443,13 @@
 
     function renderMessages(messages) {
       messagesContainer.innerHTML = '';
+      const { data: { user } } = supabase.auth.getUser();
       messages.forEach(msg => {
+        const isMe = msg.user_id === user?.id;
         const div = document.createElement('div');
-        div.className = 'message';
+        div.className = `message ${isMe ? 'me' : ''}`;
         div.innerHTML = `
-          <div class="message-avatar">${getUserInitial(msg.users?.email || 'U')}</div>
+          <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
           <div class="message-content">${escapeHtml(msg.content)}</div>
         `;
         messagesContainer.appendChild(div);
@@ -447,15 +468,10 @@
       return text.replace(/[&<>"']/g, m => map[m]);
     }
 
-    // Send message
     async function sendMessage(content) {
       if (!content.trim()) return;
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      // 👇 Replace with your actual 'general' channel UUID
-      const CHANNEL_ID = 'YOUR_GENERAL_CHANNEL_ID';
 
       const { error } = await supabase
         .from('messages')
@@ -469,10 +485,8 @@
       else messageInput.value = '';
     }
 
-    // Realtime listener
     function setupRealtime() {
-      const CHANNEL_ID = 'YOUR_GENERAL_CHANNEL_ID';
-      const channel = supabase
+      supabase
         .channel('public:messages')
         .on(
           'postgres_changes',
@@ -484,8 +498,10 @@
           },
           (payload) => {
             const msg = payload.new;
+            const { data: { user } } = supabase.auth.getUser();
+            const isMe = msg.user_id === user?.id;
             const div = document.createElement('div');
-            div.className = 'message';
+            div.className = `message ${isMe ? 'me' : ''}`;
             div.innerHTML = `
               <div class="message-avatar">${getUserInitial('U')}</div>
               <div class="message-content">${escapeHtml(msg.content)}</div>
@@ -497,7 +513,7 @@
         .subscribe();
     }
 
-    // Auth Listeners
+    // Auth listener
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         const user = session.user;
@@ -505,9 +521,6 @@
         userInitialEl.textContent = getUserInitial(user.email);
         authScreen.style.display = 'none';
         appScreen.style.display = 'flex';
-
-        // 👇 Fetch your actual 'general' channel ID once (hardcode for demo)
-        // In production, fetch it from the 'channels' table
         loadMessages();
         setupRealtime();
       } else if (event === 'SIGNED_OUT') {
@@ -517,14 +530,10 @@
       }
     });
 
-    // Event Listeners
-    loginBtn.addEventListener('click', () => {
-      signIn(emailInput.value, passwordInput.value);
-    });
-
-    signupBtn.addEventListener('click', () => {
-      signUp(emailInput.value, passwordInput.value);
-    });
+    // Events
+    loginBtn.addEventListener('click', () => signIn(emailInput.value, passwordInput.value));
+    signupBtn.addEventListener('click', () => signUp(emailInput.value, passwordInput.value));
+    sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
 
     messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -533,7 +542,7 @@
       }
     });
 
-    // Initialize Lucide icons
+    // Initialize Lucide icons (including send button)
     lucide.createIcons();
   </script>
 </body>
