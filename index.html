@@ -1,558 +1,557 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skyrra</title>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg-main: #0f0f1b;
-      --bg-panel: rgba(25, 25, 45, 0.6);
-      --bg-input: rgba(35, 35, 60, 0.7);
-      --text-primary: #f0f0ff;
-      --text-secondary: #a0a0c0;
-      --accent: #8a6bff;
-      --accent-gradient: linear-gradient(135deg, #8a6bff, #4a5de0);
-      --border-radius: 16px;
-      --spacing-sm: 0.5rem;
-      --spacing-md: 1rem;
-      --spacing-lg: 1.5rem;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eazer - Flight Radar</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Gristela', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-    body {
-      background: var(--bg-main);
-      color: var(--text-primary);
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
 
-    /* Parallax background */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 200%;
-      height: 200%;
-      background: 
-        radial-gradient(circle at 20% 30%, rgba(138, 107, 255, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(74, 93, 224, 0.1) 0%, transparent 40%),
-        var(--bg-main);
-      z-index: -2;
-      transform: translateZ(-1px) scale(2);
-      pointer-events: none;
-    }
+        .sidebar {
+            width: 350px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-    .container {
-      display: flex;
-      height: 100vh;
-    }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-    /* Auth Screen */
-    #auth-screen {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: var(--spacing-lg);
-      background: rgba(10, 10, 20, 0.8);
-      backdrop-filter: blur(12px);
-      z-index: 10;
-    }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
 
-    .logo-placeholder {
-      width: 80px;
-      height: 80px;
-      margin-bottom: var(--spacing-lg);
-    }
+        .logo img {
+            height: 50px;
+            width: auto;
+            border-radius: 8px;
+        }
 
-    .auth-card {
-      background: var(--bg-panel);
-      backdrop-filter: blur(16px);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-lg);
-      width: 100%;
-      max-width: 400px;
-      border: 1px solid rgba(138, 107, 255, 0.2);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
+        .logo-text {
+            font-size: 2rem;
+            color: #ffffff;
+            font-weight: bold;
+        }
 
-    .auth-card h2 {
-      text-align: center;
-      margin-bottom: var(--spacing-md);
-      background: var(--accent-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-size: 1.75rem;
-    }
+        .main-content {
+            flex: 1;
+            position: relative;
+        }
 
-    .input-group {
-      margin-bottom: var(--spacing-sm);
-    }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
 
-    .input-group input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-      background: var(--bg-input);
-      border: 1px solid rgba(138, 107, 255, 0.3);
-      color: white;
-      outline: none;
-      font-size: 1rem;
-    }
+        .search-container {
+            margin-bottom: 20px;
+        }
 
-    .input-group input::placeholder {
-      color: var(--text-secondary);
-    }
+        .search-container input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
 
-    .btn {
-      width: 100%;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 12px;
-      background: var(--accent-gradient);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: var(--spacing-sm);
-      transition: transform 0.2s, opacity 0.2s;
-    }
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
 
-    .btn:hover {
-      opacity: 0.9;
-      transform: translateY(-2px);
-    }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
 
-    /* App UI */
-    #app {
-      display: none;
-      width: 100%;
-    }
+        button:hover {
+            background: #45a049;
+        }
 
-    #sidebar {
-      width: 240px;
-      background: rgba(15, 15, 30, 0.7);
-      backdrop-filter: blur(12px);
-      border-right: 1px solid rgba(138, 107, 255, 0.2);
-      display: flex;
-      flex-direction: column;
-      padding: var(--spacing-lg) 0;
-    }
+        .flight-list {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
 
-    .sidebar-header {
-      padding: 0 var(--spacing-lg) var(--spacing-md);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        .flight-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border-left: 3px solid #4CAF50;
+        }
 
-    .sidebar-logo {
-      width: 36px;
-      height: 36px;
-      background: var(--accent-gradient);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 16px;
-      color: white;
-    }
+        .flight-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
-    .sidebar-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      background: var(--accent-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
 
-    .channel-list {
-      flex: 1;
-      padding: 0 var(--spacing-lg);
-    }
+        .flight-number {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #cccccc;
+        }
 
-    .channel-item {
-      padding: 0.6rem 0;
-      color: var(--text-secondary);
-      cursor: pointer;
-      border-radius: 6px;
-      padding-left: 0.5rem;
-    }
+        .flight-status {
+            font-size: 0.9rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
 
-    .channel-item:hover, .channel-item.active {
-      color: white;
-      background: rgba(138, 107, 255, 0.2);
-    }
+        .status-active {
+            background: #cccccc;
+        }
 
-    .user-info {
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+        .status-scheduled {
+            background: #2196F3;
+        }
 
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--accent-gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
-    }
+        .status-delayed {
+            background: #FF9800;
+        }
 
-    #main-chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+        .status-cancelled {
+            background: #f44336;
+        }
 
-    #chat-header {
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
+        .flight-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
 
-    #messages {
-      flex: 1;
-      padding: var(--spacing-lg);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
-    }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
 
-    .message {
-      display: flex;
-      gap: var(--spacing-sm);
-      max-width: 85%;
-    }
+        .detail-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
 
-    .message.me {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
+        .detail-value {
+            font-weight: bold;
+        }
 
-    .message-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--accent-gradient);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
-    }
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
 
-    .message-content {
-      background: var(--bg-panel);
-      padding: 0.75rem 1rem;
-      border-radius: 16px;
-      word-break: break-word;
-    }
+        .map-controls {
+            display: flex;
+            gap: 10px;
+        }
 
-    .message.me .message-content {
-      background: var(--accent-gradient);
-      color: white;
-    }
+        .map-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-    #message-input-area {
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      gap: var(--spacing-sm);
-    }
+        .map-btn:hover {
+            background: #0b7dda;
+        }
 
-    #message-input {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border-radius: 24px;
-      background: var(--bg-input);
-      border: 1px solid rgba(138, 107, 255, 0.3);
-      color: white;
-      outline: none;
-      font-size: 1rem;
-      resize: none;
-      min-height: 24px;
-      max-height: 120px;
-    }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #aaa;
+        }
 
-    #send-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--accent-gradient);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: white;
-      flex-shrink: 0;
-    }
+        .error {
+            color: #f44336;
+            padding: 10px;
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: 4px;
+            margin: 10px 0;
+        }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      #sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        padding: 0;
-      }
-      .sidebar-header, .channel-list, .user-info {
-        display: none;
-      }
-      #messages {
-        padding: var(--spacing-md);
-      }
-      #message-input-area {
-        padding: var(--spacing-sm) var(--spacing-md);
-      }
-    }
-  </style>
+        .flight-marker {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            border: 2px solid white;
+            transform: rotate(45deg);
+        }
+
+        .flight-marker.active {
+            background: #4CAF50;
+        }
+
+        .flight-marker.scheduled {
+            background: #2196F3;
+        }
+
+        .flight-marker.delayed {
+            background: #cccccc;
+        }
+
+        .flight-marker.cancelled {
+            background: #f44336;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #cccccc;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
 </head>
 <body>
-  <!-- Auth Screen -->
-  <div id="auth-screen">
-    <img src="https://ik.imagekit.io/hswtnwf8i/Evorra%20logo%20white%20no%20bg.png?updatedAt=1760781430390" class="logo-placeholder" />
-    <div class="auth-card">
-      <h2>Skyrra</h2>
-      <div class="input-group">
-        <input type="email" id="email" placeholder="Email" />
-      </div>
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Password" />
-      </div>
-      <button class="btn" id="login-btn">Log In</button>
-      <button class="btn btn-outline" id="signup-btn">Sign Up</button>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <div class="logo">
+                    <img src="https://ik.imagekit.io/hswtnwf8i/Untitled%20(30).png?updatedAt=1761065600189" alt="Eazer Logo" />
+                    <div class="logo-text"></div>
+                </div>
+                <h2>Flight Radar</h2>
+                <p>Real-time flight tracking</p>
+            </div>
+
+            <div class="info-card">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="activeCount">0</div>
+                        <div class="stat-label">Active Flights</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Total Flights</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search flights (e.g. AA123)...">
+            </div>
+
+            <div class="controls">
+                <button id="refreshBtn"><i class="fas fa-sync"></i> Refresh</button>
+                <button id="myFlightsBtn"><i class="fas fa-bookmark"></i> My Flights</button>
+            </div>
+
+            <div class="flight-list" id="flightList">
+                <div class="loading">Loading flights...</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="map"></div>
+            <div class="map-overlay">
+                <div class="map-controls">
+                    <button class="map-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                    <button class="map-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                    <button class="map-btn" id="resetViewBtn"><i class="fas fa-home"></i></button>
+                </div>
+            </div>
+            <div class="footer">Eazer Flight Radar &copy; 2023</div>
+        </div>
     </div>
-  </div>
 
-  <!-- Main App -->
-  <div class="container" id="app">
-    <div id="sidebar">
-      <div class="sidebar-header">
-        <img src="https://ik.imagekit.io/hswtnwf8i/Evorra%20logo%20white%20no%20bg.png?updatedAt=1760781430390" class="logo-placeholder" />
-        <div class="sidebar-title">Skyrra</div>
-      </div>
-      <div class="channel-list">
-        <div class="channel-item active"># general</div>
-      </div>
-      <div class="user-info">
-        <div class="user-avatar" id="user-initial">U</div>
-        <span id="user-email">user@example.com</span>
-      </div>
-    </div>
-    <div id="main-chat">
-      <div id="chat-header"># general</div>
-      <div id="messages">
-        <!-- Messages appear here -->
-      </div>
-      <div id="message-input-area">
-        <textarea id="message-input" placeholder="Message #general"></textarea>
-        <button id="send-btn">
-          <i data-lucide="send" size="18"></i>
-        </button>
-      </div>
-    </div>
-  </div>
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://lxtaitbzpvdzyonxhfmm.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
- <script>
-  // ✅ Supabase keys (no extra spaces!)
-  const SUPABASE_URL = 'https://lxtaitbzpvdzyonxhfmm.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4dGFpdGJ6cHZkenlvbnhoZm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTA3ODIsImV4cCI6MjA3NDkyNjc4Mn0.gNIq2oJFbKgz7TayICLi6djNB_j2PxAlAZYyE0s5amM';
+        // AviationStack API configuration
+        const API_KEY = '35c73473d1658ee9f8b903e435d022b2';
+        const API_URL = 'http://api.aviationstack.com/v1/flights';
 
-  // ✅ Use a different variable name to avoid conflict
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialize map
+        const map = L.map('map').setView([39.8283, -98.5795], 4);
 
-  // DOM
-  const authScreen = document.getElementById('auth-screen');
-  const appScreen = document.getElementById('app');
-  const loginBtn = document.getElementById('login-btn');
-  const signupBtn = document.getElementById('signup-btn');
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const messageInput = document.getElementById('message-input');
-  const messagesContainer = document.getElementById('messages');
-  const userEmailEl = document.getElementById('user-email');
-  const userInitialEl = document.getElementById('user-initial');
-  const sendBtn = document.getElementById('send-btn');
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
 
-  const CHANNEL_ID = '4c9064b3-97dd-4831-bbb3-fa16ec33e1af'; // your 'general' channel
+        // Flight markers storage
+        const markers = {};
+        let allFlights = [];
 
-  // Auth
-  async function signIn(email, password) {
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) alert('Login error: ' + error.message);
-  }
+        // DOM elements
+        const flightList = document.getElementById('flightList');
+        const searchInput = document.getElementById('searchInput');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const myFlightsBtn = document.getElementById('myFlightsBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetViewBtn = document.getElementById('resetViewBtn');
+        const activeCount = document.getElementById('activeCount');
+        const totalCount = document.getElementById('totalCount');
 
-  async function signUp(email, password) {
-    const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) {
-      alert('Signup error: ' + error.message);
-    } else {
-      alert('Signup successful! Please check your email for confirmation.');
-    }
-  }
+        // Fetch flights from AviationStack API
+        async function fetchFlights() {
+            try {
+                flightList.innerHTML = '<div class="loading">Loading flights...</div>';
+                
+                const response = await fetch(`${API_URL}?access_key=${API_KEY}&limit=50`);
+                const data = await response.json();
+                
+                if (data.data) {
+                    allFlights = data.data;
+                    displayFlights(allFlights);
+                    updateMap(allFlights);
+                    updateStats(allFlights);
+                } else {
+                    flightList.innerHTML = '<div class="error">Error loading flights</div>';
+                }
+            } catch (error) {
+                console.error('Error fetching flights:', error);
+                flightList.innerHTML = '<div class="error">Error loading flights</div>';
+            }
+        }
 
-  function getUserInitial(email) {
-    return email.charAt(0).toUpperCase();
-  }
+        // Display flights in the sidebar
+        function displayFlights(flights) {
+            if (flights.length === 0) {
+                flightList.innerHTML = '<div class="loading">No flights found</div>';
+                return;
+            }
 
-  // Messages
- async function loadMessages() {
-  const { data, error } = await supabaseClient
-    .from('messages')
-    .select('*, user: user_id ( email )')
-    .eq('channel_id', CHANNEL_ID)
-    .order('created_at', { ascending: true });
+            flightList.innerHTML = '';
+            flights.forEach(flight => {
+                const flightItem = document.createElement('div');
+                flightItem.className = 'flight-item';
+                flightItem.innerHTML = `
+                    <div class="flight-header">
+                        <div class="flight-number">${flight.flight?.iata || flight.flight?.icao || 'N/A'}</div>
+                        <div class="flight-status status-${getStatusClass(flight.status)}">${formatStatus(flight.status)}</div>
+                    </div>
+                    <div class="flight-details">
+                        <div class="detail-item">
+                            <span class="detail-label">From</span>
+                            <span class="detail-value">${flight.departure?.airport || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">To</span>
+                            <span class="detail-value">${flight.arrival?.airport || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Scheduled</span>
+                            <span class="detail-value">${formatTime(flight.departure?.scheduled || flight.arrival?.scheduled) || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value">${formatStatus(flight.status)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                flightItem.addEventListener('click', () => {
+                    focusOnFlight(flight);
+                });
+                
+                flightList.appendChild(flightItem);
+            });
+        }
 
-  if (error) {
-    console.error('Load messages error:', error);
-  } else {
-    await renderMessages(data); // ✅ await
-  }
-}
-async function renderMessages(messages) {
-  messagesContainer.innerHTML = '';
-  const { data: { user } } = await supabaseClient.auth.getUser(); // ✅ await here
-  messages.forEach(msg => {
-    const isMe = msg.user_id === user?.id;
-    const div = document.createElement('div');
-    div.className = `message ${isMe ? 'me' : ''}`;
-    div.innerHTML = `
-      <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
-      <div class="message-content">${escapeHtml(msg.content)}</div>
-    `;
-    messagesContainer.appendChild(div);
-  });
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+        // Update map with flight markers
+        function updateMap(flights) {
+            // Clear existing markers
+            Object.values(markers).forEach(marker => map.removeLayer(marker));
+            Object.keys(markers).forEach(key => delete markers[key]);
 
-  function escapeHtml(text) {
-    const map = {
-      '&': '&amp;',
-      '<': '<',
-      '>': '>',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-  }
+            flights.forEach(flight => {
+                if (flight.geography?.latitude && flight.geography?.longitude) {
+                    const statusClass = getStatusClass(flight.status);
+                    const marker = L.marker([flight.geography.latitude, flight.geography.longitude], {
+                        icon: L.divIcon({
+                            className: `flight-marker ${statusClass}`,
+                            html: '<i class="fas fa-plane"></i>',
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        })
+                    }).addTo(map);
 
-  async function sendMessage(content) {
-  if (!content.trim()) return;
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-  if (authError || !user) {
-    console.error('Not authenticated');
-    return;
-  }
+                    marker.bindPopup(`
+                        <b>${flight.flight?.iata || flight.flight?.icao || 'N/A'}</b><br>
+                        From: ${flight.departure?.airport || 'N/A'}<br>
+                        To: ${flight.arrival?.airport || 'N/A'}<br>
+                        Status: ${formatStatus(flight.status)}<br>
+                        Position: ${flight.geography.latitude.toFixed(4)}, ${flight.geography.longitude.toFixed(4)}
+                    `);
 
-  const { error } = await supabaseClient
-    .from('messages')
-    .insert({
-      channel_id: CHANNEL_ID,
-      user_id: user.id,
-      content: content.trim()
-    });
+                    markers[flight.flight?.iata || flight.id] = marker;
+                }
+            });
+        }
 
-  if (error) {
-    console.error('Send message error:', error); // 👈 This will show the 400 reason
-  } else {
-    messageInput.value = '';
-  }
-}
+        // Update statistics
+        function updateStats(flights) {
+            const activeFlights = flights.filter(flight => 
+                flight.status && flight.status.toLowerCase().includes('active')
+            ).length;
+            
+            activeCount.textContent = activeFlights;
+            totalCount.textContent = flights.length;
+        }
 
-  function setupRealtime() {
-  const channel = supabaseClient
-    .channel('public:messages')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `channel_id=eq.${CHANNEL_ID}`
-      },
-      async (payload) => { // ✅ make callback async
-        const msg = payload.new;
-        const { data: { user } } = await supabaseClient.auth.getUser(); // ✅ await
-        const isMe = msg.user_id === user?.id;
-        const div = document.createElement('div');
-        div.className = `message ${isMe ? 'me' : ''}`;
-        div.innerHTML = `
-          <div class="message-avatar">${getUserInitial(msg.user?.email || 'U')}</div>
-          <div class="message-content">${escapeHtml(msg.content)}</div>
-        `;
-        messagesContainer.appendChild(div);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    )
-    .subscribe();
-}
+        // Focus map on specific flight
+        function focusOnFlight(flight) {
+            if (flight.geography?.latitude && flight.geography?.longitude) {
+                map.setView([flight.geography.latitude, flight.geography.longitude], 8);
+                
+                // Highlight the marker temporarily
+                const marker = markers[flight.flight?.iata || flight.id];
+                if (marker) {
+                    marker.openPopup();
+                }
+            }
+        }
 
-  // Auth listener
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') {
-      const user = session.user;
-      userEmailEl.textContent = user.email;
-      userInitialEl.textContent = getUserInitial(user.email);
-      authScreen.style.display = 'none';
-      appScreen.style.display = 'flex';
-      loadMessages();
-      setupRealtime();
-    } else if (event === 'SIGNED_OUT') {
-      authScreen.style.display = 'flex';
-      appScreen.style.display = 'none';
-      messagesContainer.innerHTML = '';
-    }
-  });
+        // Helper functions
+        function getStatusClass(status) {
+            if (!status) return 'scheduled';
+            const lowerStatus = status.toLowerCase();
+            if (lowerStatus.includes('active') || lowerStatus.includes('in')) return 'active';
+            if (lowerStatus.includes('delay')) return 'delayed';
+            if (lowerStatus.includes('cancel')) return 'cancelled';
+            return 'scheduled';
+        }
 
-  // Events
-  loginBtn.addEventListener('click', () => signIn(emailInput.value, passwordInput.value));
-  signupBtn.addEventListener('click', () => signUp(emailInput.value, passwordInput.value));
-  sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
+        function formatStatus(status) {
+            if (!status) return 'Scheduled';
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        }
 
-  messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(messageInput.value);
-    }
-  });
+        function formatTime(timeStr) {
+            if (!timeStr) return null;
+            const date = new Date(timeStr);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
 
-  // Initialize Lucide icons
-  lucide.createIcons();
-</script>
+        // Event listeners
+        refreshBtn.addEventListener('click', fetchFlights);
+        
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            if (searchTerm) {
+                const filtered = allFlights.filter(flight => 
+                    (flight.flight?.iata && flight.flight.iata.toLowerCase().includes(searchTerm)) ||
+                    (flight.flight?.icao && flight.flight.icao.toLowerCase().includes(searchTerm)) ||
+                    (flight.departure?.airport && flight.departure.airport.toLowerCase().includes(searchTerm)) ||
+                    (flight.arrival?.airport && flight.arrival.airport.toLowerCase().includes(searchTerm))
+                );
+                displayFlights(filtered);
+                updateStats(filtered);
+            } else {
+                displayFlights(allFlights);
+                updateStats(allFlights);
+            }
+        });
+
+        zoomInBtn.addEventListener('click', () => map.zoomIn());
+        zoomOutBtn.addEventListener('click', () => map.zoomOut());
+        resetViewBtn.addEventListener('click', () => map.setView([39.8283, -98.5795], 4));
+
+        // Initialize the application
+        fetchFlights();
+    </script>
 </body>
 </html>
